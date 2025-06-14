@@ -6,7 +6,9 @@ import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
 import { createServer } from "http";
-// import authRoutes from "./route/auth.js";
+import { v2 as cloudinary } from "cloudinary";
+import fileUpload from "express-fileupload";
+import authRoutes from "./routes/auth.js";
 
 const app = express();
 const https = createServer(app);
@@ -26,15 +28,26 @@ app.use(
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  fileUpload({
+    useTempFiles: true,
+  })
+);
 
-// app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes);
+
+cloudinary.config({
+  cloud_name: String(process.env.cloudinary_cloud_name),
+  api_key: Number(process.env.cloudinary_api_key),
+  api_secret: String(process.env.cloudinary_api_secret),
+});
 
 mongoose.set("strictQuery", true);
 
 mongoose
   .connect(process.env.MONGODB)
   .then(() =>
-    https.listen(process.env.PORT, () =>
+    https.listen(process.env.PORT, "0.0.0.0", () =>
       console.log(`Server is listening at ${process.env.PORT}`)
     )
   )
